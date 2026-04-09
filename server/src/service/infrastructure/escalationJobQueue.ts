@@ -285,24 +285,8 @@ export class EscalationJobQueue implements IEscalationJobQueue {
 				return;
 			}
 
-			// Filter out escalation notification IDs that are also used for regular monitor notifications
-			// This ensures escalation emails only go to escalation-specific recipients, not regular recipients
-			const regularNotificationIds = monitor.notifications ?? [];
-			const escalationOnlyNotificationIds = notificationIds.filter(
-				(notificationId) => !regularNotificationIds.includes(notificationId)
-			);
-
-			if (escalationOnlyNotificationIds.length === 0) {
-				this.logger.info({
-					message: `No escalation-specific notifications to send for monitor ${monitorId} (all escalation notifications are also regular notifications)`,
-					service: SERVICE_NAME,
-					method: 'processEscalationJob',
-				});
-				return;
-			}
-
-			// Send notifications to escalation-specific channels only
-			const sendPromises = escalationOnlyNotificationIds.map(async (notificationId) => {
+			// Send notifications to all configured escalation channels
+			const sendPromises = notificationIds.map(async (notificationId) => {
 				try {
 					await this.notificationsService.sendNotification(
 						teamId,
@@ -344,7 +328,7 @@ export class EscalationJobQueue implements IEscalationJobQueue {
 				});
 			} else {
 				this.logger.info({
-					message: `Escalation notifications sent successfully to ${successCount} escalation-specific channels for monitor ${monitorId}`,
+					message: `Escalation notifications sent successfully for monitor ${monitorId}`,
 					service: SERVICE_NAME,
 					method: 'processEscalationJob',
 				});
